@@ -1,326 +1,806 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Kalkulator Subnet &amp; VLSM</title>
-<style>
-:root{
-  color-scheme:light;
-  --bg:#eef2fb;--card:#fff;--ink:#101d3b;--mut:#5d6b8a;--line:#dbe2f2;--soft:#f5f7fd;
-  --net:#2c58e8;--netbg:#dfe7ff;--host:#0b8f6d;--hostbg:#d9f5ec;--acc:#2c58e8;--accink:#fff;
-  --err:#b3261e;--errbg:#fdecea;--hero1:#14275a;--hero2:#2c58e8;
-  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  color-scheme:dark;--bg:#0b1226;--card:#141d38;--ink:#e9eeff;--mut:#9aa8cc;--line:#26335a;--soft:#192446;
-  --net:#8aa8ff;--netbg:#233a7a;--host:#4fd8b0;--hostbg:#134437;--acc:#7c9bff;--accink:#0b1226;
-  --err:#ff9c94;--errbg:#3a1f1d;--hero1:#0e1a3d;--hero2:#2c47a8}}
-:root[data-theme="dark"]{
-  color-scheme:dark;--bg:#0b1226;--card:#141d38;--ink:#e9eeff;--mut:#9aa8cc;--line:#26335a;--soft:#192446;
-  --net:#8aa8ff;--netbg:#233a7a;--host:#4fd8b0;--hostbg:#134437;--acc:#7c9bff;--accink:#0b1226;
-  --err:#ff9c94;--errbg:#3a1f1d;--hero1:#0e1a3d;--hero2:#2c47a8}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
-  background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:22px 22px}
-main{max-width:860px;margin:0 auto;padding:28px 18px 56px}
-.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:20px}
-h1{font-size:clamp(1.6rem,4.5vw,2.3rem);line-height:1.1;margin:0 0 6px;letter-spacing:-.02em}
-.sub{margin:0;color:var(--mut);max-width:46ch}
-button{font:inherit;cursor:pointer;color:inherit}
-button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.theme{border:1px solid var(--line);background:var(--card);border-radius:999px;width:42px;height:42px;font-size:1.1rem;flex:none}
-.tabs{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:16px}
-.tab{border:0;background:none;padding:8px 22px;border-radius:9px;font-weight:600;color:var(--mut)}
-.tab[aria-selected="true"]{background:var(--acc);color:var(--accink)}
-.panel[hidden]{display:none}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 8px 28px rgba(16,29,59,.07)}
-label,.lab{display:block;font-size:.85rem;color:var(--mut);margin-bottom:4px}
-input[type=text],input[type=number]{width:100%;font:inherit;font-size:1.1rem;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--soft);color:var(--ink);font-variant-numeric:tabular-nums}
-input[aria-invalid="true"]{border-color:var(--err)}
-.form{display:grid;grid-template-columns:1fr 100px;gap:12px}
-.slide{grid-column:1/-1;display:flex;align-items:center;gap:12px;color:var(--mut);font-size:.85rem}
-input[type=range]{flex:1;accent-color:var(--acc);height:28px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.chip{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:4px 12px;font-size:.85rem;color:var(--mut);font-variant-numeric:tabular-nums}
-.chip:hover{border-color:var(--acc);color:var(--ink)}
-.msg{margin:14px 0 0;padding:10px 12px;border-radius:10px;background:var(--errbg);color:var(--err)}
-.msg[hidden],.res[hidden]{display:none}
-.res{margin-top:18px}
-.hero{background:linear-gradient(135deg,var(--hero1),var(--hero2));border-radius:14px;padding:18px 16px;color:#fff;margin-bottom:16px}
-.hero .big{font-size:clamp(1.3rem,4vw,1.9rem);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.hero .big small{font-weight:500;opacity:.75;margin-left:8px;font-size:.6em}
-.bits{display:flex;flex-wrap:wrap;gap:10px 12px;margin:14px 0 10px}
-.oct{display:flex;flex-direction:column;gap:3px}
-.dec{font-size:.78rem;opacity:.8;text-align:center;font-variant-numeric:tabular-nums}
-.cells{display:flex;gap:2px}
-.b{width:clamp(14px,3.6vw,24px);height:34px;border:0;border-radius:5px;font:700 .85rem ui-monospace,Consolas,monospace;padding:0}
-.b.n{background:var(--netbg);color:var(--net)}
-.b.h{background:var(--hostbg);color:var(--host)}
-.b.e{box-shadow:-3px 0 0 #fff}
-.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.8rem;opacity:.9}
-.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
-.tile{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;position:relative}
-.tile .k{font-size:.8rem;color:var(--mut)}
-.tile .v{font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums;word-break:break-all;padding-right:34px}
-.tile .v small{font-weight:400;color:var(--mut);font-size:.78rem;display:block}
-.tile.k1{border-color:var(--net)}
-.tile.k2{border-color:var(--host)}
-.cp{position:absolute;right:8px;top:8px;border:1px solid var(--line);background:var(--card);border-radius:8px;width:28px;height:28px;font-size:.8rem;line-height:1}
-.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;font-weight:600}
-.btn:hover{border-color:var(--acc)}
-.btn.p{background:var(--acc);color:var(--accink);border-color:var(--acc)}
-.reqs{display:grid;gap:8px;margin:6px 0 12px}
-.req{display:flex;gap:8px;align-items:center}
-.req span{color:var(--mut);width:1.6rem;text-align:right;font-variant-numeric:tabular-nums}
-.req input{max-width:180px}
-.x{border:1px solid var(--line);background:var(--card);border-radius:10px;width:40px;height:42px}
-.sum{margin:0 0 12px;color:var(--mut)}
-.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
-table{border-collapse:collapse;width:100%;min-width:640px;font-variant-numeric:tabular-nums}
-th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
-th{font-size:.82rem;color:var(--mut);background:var(--soft);font-weight:600}
-tr:last-child td{border-bottom:0}
-.bar{display:inline-block;height:8px;border-radius:4px;background:var(--host);vertical-align:middle;margin-right:8px}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .2s}
-.toast.on{opacity:1}
-@media (prefers-reduced-motion:reduce){.toast{transition:none}}
-</style>
-</head>
-<body>
-<main>
-  <div class="top">
-    <div>
-      <h1>Kalkulator Subnet &amp; VLSM</h1>
-      <p class="sub">Lihat bit network dan bit host berubah saat prefix digeser, lalu bagi jaringan sesuai kebutuhan host.</p>
-    </div>
-    <button class="theme" id="theme" type="button" aria-label="Ganti tema terang atau gelap">◐</button>
-  </div>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kalkulator Subnet &amp; VLSM</title>
+  <p class="school-name">SMK BRANTAS KARANGKATES</p>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef2fb;
+      --card: #fff;
+      --ink: #101d3b;
+      --mut: #5d6b8a;
+      --line: #dbe2f2;
+      --soft: #f5f7fd;
+      --net: #2c58e8;
+      --netbg: #dfe7ff;
+      --host: #0b8f6d;
+      --hostbg: #d9f5ec;
+      --acc: #2c58e8;
+      --accink: #fff;
+      --err: #b3261e;
+      --errbg: #fdecea;
+      --hero1: #14275a;
+      --hero2: #2c58e8;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
 
-  <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="t1" aria-selected="true" aria-controls="p1">Subnet</button>
-    <button class="tab" role="tab" id="t2" aria-selected="false" aria-controls="p2">VLSM</button>
-  </div>
+      .school-name {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #83aaff;
+        margin-top: 5px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+      }
 
-  <section class="panel" id="p1" role="tabpanel" aria-labelledby="t1">
-    <div class="card">
-      <div class="form">
-        <div><label for="ip">Alamat IP</label><input type="text" id="ip" inputmode="decimal" autocomplete="off" value="172.16.5.130" placeholder="172.16.5.130"></div>
-        <div><label for="pf">Prefix</label><input type="text" id="pf" inputmode="numeric" autocomplete="off" value="25" placeholder="25"></div>
-        <div class="slide"><span>/0</span><input type="range" id="rg" min="0" max="32" value="25" aria-label="Geser prefix"><span>/32</span></div>
-      </div>
-      <div class="chips" id="chips"></div>
-      <p class="msg" id="msg" role="alert" hidden></p>
-
-      <div class="res" id="res" hidden>
-        <div class="hero">
-          <div class="big" id="hcidr"></div>
-          <div class="bits" id="bits"></div>
-          <div class="legend"><span><i style="background:var(--netbg)"></i>Bit network (<b id="nb"></b>)</span><span><i style="background:var(--hostbg)"></i>Bit host (<b id="hb"></b>)</span><span>Klik sebuah bit untuk mengubah prefix</span></div>
-        </div>
-        <div class="tiles" id="tiles"></div>
-        <div class="acts">
-          <button class="btn" id="prev" type="button">← Subnet sebelumnya</button>
-          <button class="btn" id="next" type="button">Subnet berikutnya →</button>
-          <button class="btn p" id="all" type="button">Salin ringkasan</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
-    <div class="card">
-      <label for="vn">Jaringan induk (CIDR)</label>
-      <input type="text" id="vn" autocomplete="off" value="192.168.1.0/24" placeholder="192.168.1.0/24" style="max-width:260px;margin-bottom:14px">
-      <span class="lab">Kebutuhan host per subnet</span>
-      <div class="reqs" id="reqs"></div>
-      <div class="acts" style="margin-top:0">
-        <button class="btn" id="add" type="button">+ Tambah kebutuhan</button>
-        <button class="btn p" id="go" type="button">Alokasikan</button>
-      </div>
-      <p class="msg" id="vmsg" role="alert" hidden></p>
-      <div class="res" id="vres" hidden>
-        <p class="sum" id="sum"></p>
-        <div class="tw"><table><thead><tr><th>#</th><th>Kebutuhan</th><th>Network</th><th>Mask</th><th>Range host</th><th>Broadcast</th><th>Host</th><th>Terpakai</th></tr></thead><tbody id="tb"></tbody></table></div>
-      </div>
-    </div>
-  </section>
-</main>
-<div class="toast" id="toast" role="status"></div>
-
-<script>
-(function(){
-var $=function(i){return document.getElementById(i)};
-var E=function(m){return new Error(m)};
-
-/* ---------- inti perhitungan ---------- */
-function parseIP(s){
-  if(!s)throw E("Alamat IP masih kosong.");
-  if(/\s/.test(s))throw E("Alamat IP tidak boleh mengandung spasi.");
-  var p=s.split(".");
-  if(p.length!==4)throw E("Alamat IP harus terdiri dari 4 oktet, contoh 192.168.1.10.");
-  var n=0;
-  for(var i=0;i<4;i++){
-    if(!/^\d{1,3}$/.test(p[i]))throw E("Oktet ke-"+(i+1)+" harus berupa angka 0–255.");
-    if(p[i].length>1&&p[i][0]==="0")throw E("Oktet ke-"+(i+1)+" tidak boleh diawali angka nol.");
-    if(+p[i]>255)throw E("Oktet ke-"+(i+1)+" bernilai "+p[i]+", maksimal 255.");
-    n=n*256+(+p[i]);
-  }
-  return n;
-}
-function parsePf(s){
-  if(s==="")throw E("Prefix masih kosong.");
-  if(!/^\d{1,2}$/.test(s)||+s>32)throw E("Prefix harus bilangan bulat 0–32.");
-  return +s;
-}
-function str(n){return[Math.floor(n/16777216),(n>>>16)&255,(n>>>8)&255,n&255].join(".")}
-function maskOf(p){return p===0?0:(0xFFFFFFFF<<(32-p))>>>0}
-function calc(ip,p){
-  var m=maskOf(p),net=(ip&m)>>>0,bc=(net|(~m>>>0))>>>0,r={p:p,ip:ip,mask:m,net:net,bc:bc,total:Math.pow(2,32-p)};
-  if(p===32){r.first=r.last=ip;r.hosts=1;r.note="host tunggal"}
-  else if(p===31){r.first=net;r.last=bc;r.hosts=2;r.note="point-to-point (RFC 3021)"}
-  else{r.first=net+1;r.last=bc-1;r.hosts=r.total-2}
-  r.nobc=p>=31;
-  return r;
-}
-function kind(ip){
-  var a=Math.floor(ip/16777216),b=(ip>>>16)&255,k;
-  if(a===0)k="This network";
-  else if(a===10||(a===172&&b>=16&&b<=31)||(a===192&&b===168))k="Privat (RFC 1918)";
-  else if(a===127)k="Loopback";
-  else if(a===169&&b===254)k="APIPA (link-local)";
-  else if(a>=224&&a<=239)k="Multicast";
-  else if(a>=240)k="Reserved";
-  else k="Publik";
-  var c=a<128?"A":a<192?"B":a<224?"C":a<240?"D":"E";
-  return{type:k,cls:c};
-}
-function fmt(n){return n.toLocaleString("id-ID")}
-
-/* ---------- util UI ---------- */
-var tt;
-function toast(t){var e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(tt);tt=setTimeout(function(){e.classList.remove("on")},1400)}
-function copy(t){
-  function ok(){toast("Disalin: "+(t.length>40?t.slice(0,40)+"…":t))}
-  function fb(){var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy");ok()}catch(e){toast("Gagal menyalin")}document.body.removeChild(a)}
-  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,fb);else fb();
-}
-$("theme").onclick=function(){
-  var r=document.documentElement,d=r.getAttribute("data-theme");
-  var dark=d?d==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
-  r.setAttribute("data-theme",dark?"light":"dark");
-};
-var tabs=[["t1","p1"],["t2","p2"]];
-tabs.forEach(function(t){$(t[0]).onclick=function(){tabs.forEach(function(x){
-  var on=x[0]===t[0];$(x[0]).setAttribute("aria-selected",on);$(x[1]).hidden=!on})}});
-
-/* ---------- tab Subnet ---------- */
-var ipEl=$("ip"),pfEl=$("pf"),rg=$("rg"),cur=null;
-["172.16.5.130/25","10.0.0.0/30","192.168.1.0/31","192.168.1.5/32","192.168.10.77/26"].forEach(function(s){
-  var b=document.createElement("button");b.type="button";b.className="chip";b.textContent=s;
-  b.onclick=function(){var q=s.split("/");ipEl.value=q[0];pfEl.value=q[1];rg.value=q[1];run()};
-  $("chips").appendChild(b);
-});
-function bad(el,t){
-  $("res").hidden=true;cur=null;ipEl.removeAttribute("aria-invalid");pfEl.removeAttribute("aria-invalid");
-  if(t===null){$("msg").hidden=true;return}
-  $("msg").textContent=t;$("msg").hidden=false;if(el)el.setAttribute("aria-invalid","true");
-}
-function tile(k,v,cls,sm,cp){
-  return '<div class="tile '+(cls||"")+'"><div class="k">'+k+'</div><div class="v">'+v+(sm?'<small>'+sm+'</small>':'')+'</div>'+
-    (cp?'<button class="cp" type="button" data-c="'+cp+'" aria-label="Salin '+k+'">⧉</button>':'')+'</div>';
-}
-function run(){
-  if(ipEl.value===""&&pfEl.value===""){bad(null,null);return}
-  var ip,p;
-  try{ip=parseIP(ipEl.value)}catch(e){bad(ipEl,e.message);return}
-  try{p=parsePf(pfEl.value)}catch(e){bad(pfEl,e.message);return}
-  rg.value=p;ipEl.removeAttribute("aria-invalid");pfEl.removeAttribute("aria-invalid");$("msg").hidden=true;
-  var r=cur=calc(ip,p),kd=kind(ip);
-  $("hcidr").innerHTML=str(r.net)+"/"+p+"<small>"+str(r.mask)+"</small>";
-  var h="";
-  for(var o=0;o<4;o++){
-    h+='<div class="oct"><div class="dec">'+((ip>>>(24-o*8))&255)+'</div><div class="cells">';
-    for(var k=0;k<8;k++){
-      var pos=o*8+k;
-      h+='<button type="button" class="b '+(pos<p?"n":"h")+(pos===p&&p>0&&p<32?" e":"")+'" data-p="'+(pos+1)+'" aria-label="Set prefix ke '+(pos+1)+'">'+((ip>>>(31-pos))&1)+'</button>';
     }
-    h+='</div></div>';
-  }
-  $("bits").innerHTML=h;$("nb").textContent=p;$("hb").textContent=32-p;
-  var wc=(~r.mask)>>>0;
-  $("tiles").innerHTML=
-    tile("Subnet mask",str(r.mask),"","/"+p,str(r.mask))+
-    tile("Wildcard mask",str(wc),"",null,str(wc))+
-    tile("Network address",str(r.net),"k1",null,str(r.net))+
-    tile("Broadcast address",r.nobc?"— tidak ada":str(r.bc),"k2",null,r.nobc?"":str(r.bc))+
-    tile("Host pertama",str(r.first),"",null,str(r.first))+
-    tile("Host terakhir",str(r.last),"",null,str(r.last))+
-    tile("Jumlah host",fmt(r.hosts),"",r.note||("2^"+(32-p)+" − 2"),String(r.hosts))+
-    tile("Total alamat",fmt(r.total),"","2^"+(32-p))+
-    tile("Kelas &amp; jenis","Kelas "+kd.cls,"",kd.type);
-  $("res").hidden=false;
-  $("prev").disabled=r.net<r.total;
-  $("next").disabled=r.net+r.total>4294967295;
-}
-$("bits").onclick=function(e){var b=e.target.closest(".b");if(b){pfEl.value=b.getAttribute("data-p");run()}};
-$("tiles").onclick=function(e){var b=e.target.closest(".cp");if(b)copy(b.getAttribute("data-c"))};
-rg.oninput=function(){pfEl.value=rg.value;run()};
-ipEl.oninput=pfEl.oninput=run;
-[ipEl,pfEl].forEach(function(el){el.onkeydown=function(e){if(e.key==="Enter")run()}});
-function shift(d){if(!cur)return;var n=cur.net+d*cur.total;if(n<0||n>4294967295)return;ipEl.value=str(n);run()}
-$("prev").onclick=function(){shift(-1)};
-$("next").onclick=function(){shift(1)};
-$("all").onclick=function(){
-  if(!cur)return;var r=cur;
-  copy("Network: "+str(r.net)+"/"+r.p+"\nMask: "+str(r.mask)+"\nBroadcast: "+(r.nobc?"-":str(r.bc))+
-    "\nHost: "+str(r.first)+" - "+str(r.last)+"\nJumlah host: "+r.hosts);
-};
 
-/* ---------- tab VLSM ---------- */
-var reqs=[100,50,20,2];
-function drawReqs(){
-  $("reqs").innerHTML=reqs.map(function(v,i){
-    return '<div class="req"><span>'+(i+1)+'</span><input type="number" min="1" inputmode="numeric" data-i="'+i+'" value="'+v+'" aria-label="Kebutuhan host ke-'+(i+1)+'"><button class="x" type="button" data-x="'+i+'" aria-label="Hapus kebutuhan ke-'+(i+1)+'">✕</button></div>';
-  }).join("");
-}
-$("reqs").oninput=function(e){var i=e.target.getAttribute("data-i");if(i!==null)reqs[i]=e.target.value};
-$("reqs").onclick=function(e){var b=e.target.closest(".x");if(b){reqs.splice(+b.getAttribute("data-x"),1);drawReqs()}};
-$("add").onclick=function(){reqs.push("");drawReqs();var f=$("reqs").querySelectorAll("input");f[f.length-1].focus()};
-function vbad(t){$("vres").hidden=true;$("vmsg").textContent=t;$("vmsg").hidden=false}
-function vlsm(){
-  try{
-    var s=$("vn").value,q=s.split("/");
-    if(q.length!==2)throw E("Tulis jaringan dalam format CIDR, contoh 192.168.1.0/24.");
-    var ip=parseIP(q[0]),p=parsePf(q[1]);
-    if(p>30)throw E("Prefix jaringan induk maksimal /30.");
-    if((ip&maskOf(p))>>>0!==ip)throw E(q[0]+"/"+p+" bukan alamat jaringan yang valid. Alamat network seharusnya "+str((ip&maskOf(p))>>>0)+"/"+p+".");
-    if(!reqs.length)throw E("Tambahkan minimal satu kebutuhan host.");
-    var need=reqs.map(function(v,i){
-      if(!/^\d+$/.test(String(v))||+v<1)throw E("Kebutuhan ke-"+(i+1)+" harus bilangan bulat minimal 1.");
-      return +v});
-    var tot=Math.pow(2,32-p),off=0,used=0,rows=[];
-    need.slice().sort(function(a,b){return b-a}).forEach(function(n){
-      var size=4;while(size<n+2)size*=2;
-      if(off+size>tot)throw E("Blok tidak cukup: kebutuhan "+n+" host (blok "+size+" alamat) tidak muat di "+s+".");
-      var bp=32-Math.log2(size),r=calc(ip+off,bp);r.need=n;rows.push(r);off+=size;used+=size;
-    });
-    $("vmsg").hidden=true;
-    $("tb").innerHTML=rows.map(function(r,i){
-      var pct=Math.round(r.need/r.hosts*100);
-      return "<tr><td>"+(i+1)+"</td><td>"+r.need+"</td><td><b>"+str(r.net)+"/"+r.p+"</b></td><td>"+str(r.mask)+"</td><td>"+
-        str(r.first)+" – "+str(r.last)+"</td><td>"+str(r.bc)+"</td><td>"+r.hosts+"</td><td><span class='bar' style='width:"+(pct*0.5)+"px'></span>"+pct+"%</td></tr>";
-    }).join("");
-    $("sum").textContent="Terpakai "+fmt(used)+" dari "+fmt(tot)+" alamat ("+Math.round(used/tot*100)+"%). Sisa "+fmt(tot-used)+" alamat.";
-    $("vres").hidden=false;
-  }catch(e){vbad(e.message)}
-}
-$("go").onclick=vlsm;
-drawReqs();run();
-})();
-</script>
+    @media (prefers-color-scheme:dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #0b1226;
+        --card: #141d38;
+        --ink: #e9eeff;
+        --mut: #9aa8cc;
+        --line: #26335a;
+        --soft: #192446;
+        --net: #8aa8ff;
+        --netbg: #233a7a;
+        --host: #4fd8b0;
+        --hostbg: #134437;
+        --acc: #7c9bff;
+        --accink: #0b1226;
+        --err: #ff9c94;
+        --errbg: #3a1f1d;
+        --hero1: #0e1a3d;
+        --hero2: #2c47a8
+      }
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0b1226;
+      --card: #141d38;
+      --ink: #e9eeff;
+      --mut: #9aa8cc;
+      --line: #26335a;
+      --soft: #192446;
+      --net: #8aa8ff;
+      --netbg: #233a7a;
+      --host: #4fd8b0;
+      --hostbg: #134437;
+      --acc: #7c9bff;
+      --accink: #0b1226;
+      --err: #ff9c94;
+      --errbg: #3a1f1d;
+      --hero1: #0e1a3d;
+      --hero2: #2c47a8
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px)
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+      background-image: radial-gradient(var(--line) 1px, transparent 1px);
+      background-size: 22px 22px
+    }
+
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 18px 56px
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 20px
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 4.5vw, 2.3rem);
+      line-height: 1.1;
+      margin: 0 0 6px;
+      letter-spacing: -.02em
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--mut);
+      max-width: 46ch
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+      color: inherit
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid var(--acc);
+      outline-offset: 2px
+    }
+
+    .theme {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 999px;
+      width: 42px;
+      height: 42px;
+      font-size: 1.1rem;
+      flex: none
+    }
+
+    .tabs {
+      display: inline-flex;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 16px
+    }
+
+    .tab {
+      border: 0;
+      background: none;
+      padding: 8px 22px;
+      border-radius: 9px;
+      font-weight: 600;
+      color: var(--mut)
+    }
+
+    .tab[aria-selected="true"] {
+      background: var(--acc);
+      color: var(--accink)
+    }
+
+    .panel[hidden] {
+      display: none
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 28px rgba(16, 29, 59, .07)
+    }
+
+    label,
+    .lab {
+      display: block;
+      font-size: .85rem;
+      color: var(--mut);
+      margin-bottom: 4px
+    }
+
+    input[type=text],
+    input[type=number] {
+      width: 100%;
+      font: inherit;
+      font-size: 1.1rem;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      color: var(--ink);
+      font-variant-numeric: tabular-nums
+    }
+
+    input[aria-invalid="true"] {
+      border-color: var(--err)
+    }
+
+    .form {
+      display: grid;
+      grid-template-columns: 1fr 100px;
+      gap: 12px
+    }
+
+    .slide {
+      grid-column: 1/-1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--mut);
+      font-size: .85rem
+    }
+
+    input[type=range] {
+      flex: 1;
+      accent-color: var(--acc);
+      height: 28px
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: .85rem;
+      color: var(--mut);
+      font-variant-numeric: tabular-nums
+    }
+
+    .chip:hover {
+      border-color: var(--acc);
+      color: var(--ink)
+    }
+
+    .msg {
+      margin: 14px 0 0;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--errbg);
+      color: var(--err)
+    }
+
+    .msg[hidden],
+    .res[hidden] {
+      display: none
+    }
+
+    .res {
+      margin-top: 18px
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--hero1), var(--hero2));
+      border-radius: 14px;
+      padding: 18px 16px;
+      color: #fff;
+      margin-bottom: 16px
+    }
+
+    .hero .big {
+      font-size: clamp(1.3rem, 4vw, 1.9rem);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.01em
+    }
+
+    .hero .big small {
+      font-weight: 500;
+      opacity: .75;
+      margin-left: 8px;
+      font-size: .6em
+    }
+
+    .bits {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      margin: 14px 0 10px
+    }
+
+    .oct {
+      display: flex;
+      flex-direction: column;
+      gap: 3px
+    }
+
+    .dec {
+      font-size: .78rem;
+      opacity: .8;
+      text-align: center;
+      font-variant-numeric: tabular-nums
+    }
+
+    .cells {
+      display: flex;
+      gap: 2px
+    }
+
+    .b {
+      width: clamp(14px, 3.6vw, 24px);
+      height: 34px;
+      border: 0;
+      border-radius: 5px;
+      font: 700 .85rem ui-monospace, Consolas, monospace;
+      padding: 0
+    }
+
+    .b.n {
+      background: var(--netbg);
+      color: var(--net)
+    }
+
+    .b.h {
+      background: var(--hostbg);
+      color: var(--host)
+    }
+
+    .b.e {
+      box-shadow: -3px 0 0 #fff
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 18px;
+      font-size: .8rem;
+      opacity: .9
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: -1px
+    }
+
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px
+    }
+
+    .tile {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      position: relative
+    }
+
+    .tile .k {
+      font-size: .8rem;
+      color: var(--mut)
+    }
+
+    .tile .v {
+      font-weight: 700;
+      font-size: 1.05rem;
+      font-variant-numeric: tabular-nums;
+      word-break: break-all;
+      padding-right: 34px
+    }
+
+    .tile .v small {
+      font-weight: 400;
+      color: var(--mut);
+      font-size: .78rem;
+      display: block
+    }
+
+    .tile.k1 {
+      border-color: var(--net)
+    }
+
+    .tile.k2 {
+      border-color: var(--host)
+    }
+
+    .cp {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      font-size: .8rem;
+      line-height: 1
+    }
+
+    .acts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 600
+    }
+
+    .btn:hover {
+      border-color: var(--acc)
+    }
+
+    .btn.p {
+      background: var(--acc);
+      color: var(--accink);
+      border-color: var(--acc)
+    }
+
+    .reqs {
+      display: grid;
+      gap: 8px;
+      margin: 6px 0 12px
+    }
+
+    .req {
+      display: flex;
+      gap: 8px;
+      align-items: center
+    }
+
+    .req span {
+      color: var(--mut);
+      width: 1.6rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums
+    }
+
+    .req input {
+      max-width: 180px
+    }
+
+    .x {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      width: 40px;
+      height: 42px
+    }
+
+    .sum {
+      margin: 0 0 12px;
+      color: var(--mut)
+    }
+
+    .tw {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 640px;
+      font-variant-numeric: tabular-nums
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap
+    }
+
+    th {
+      font-size: .82rem;
+      color: var(--mut);
+      background: var(--soft);
+      font-weight: 600
+    }
+
+    tr:last-child td {
+      border-bottom: 0
+    }
+
+    .bar {
+      display: inline-block;
+      height: 8px;
+      border-radius: 4px;
+      background: var(--host);
+      vertical-align: middle;
+      margin-right: 8px
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--bg);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: .9rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s
+    }
+
+    .toast.on {
+      opacity: 1
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      .toast {
+        transition: none
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <div class="top">
+      <div>
+        <h1>Kalkulator Subnet &amp; VLSM</h1>
+        <p class="sub">Lihat bit network dan bit host berubah saat prefix digeser, lalu bagi jaringan sesuai kebutuhan
+          host.</p>
+      </div>
+      <button class="theme" id="theme" type="button" aria-label="Ganti tema terang atau gelap">◐</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="t1" aria-selected="true" aria-controls="p1">Subnet</button>
+      <button class="tab" role="tab" id="t2" aria-selected="false" aria-controls="p2">VLSM</button>
+    </div>
+
+    <section class="panel" id="p1" role="tabpanel" aria-labelledby="t1">
+      <div class="card">
+        <div class="form">
+          <div><label for="ip">Alamat IP</label><input type="text" id="ip" inputmode="decimal" autocomplete="off"
+              value="172.16.5.130" placeholder="172.16.5.130"></div>
+          <div><label for="pf">Prefix</label><input type="text" id="pf" inputmode="numeric" autocomplete="off"
+              value="25" placeholder="25"></div>
+          <div class="slide"><span>/0</span><input type="range" id="rg" min="0" max="32" value="25"
+              aria-label="Geser prefix"><span>/32</span></div>
+        </div>
+        <div class="chips" id="chips"></div>
+        <p class="msg" id="msg" role="alert" hidden></p>
+
+        <div class="res" id="res" hidden>
+          <div class="hero">
+            <div class="big" id="hcidr"></div>
+            <div class="bits" id="bits"></div>
+            <div class="legend"><span><i style="background:var(--netbg)"></i>Bit network (<b
+                  id="nb"></b>)</span><span><i style="background:var(--hostbg)"></i>Bit host (<b
+                  id="hb"></b>)</span><span>Klik sebuah bit untuk mengubah prefix</span></div>
+          </div>
+          <div class="tiles" id="tiles"></div>
+          <div class="acts">
+            <button class="btn" id="prev" type="button">← Subnet sebelumnya</button>
+            <button class="btn" id="next" type="button">Subnet berikutnya →</button>
+            <button class="btn p" id="all" type="button">Salin ringkasan</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+      <div class="card">
+        <label for="vn">Jaringan induk (CIDR)</label>
+        <input type="text" id="vn" autocomplete="off" value="192.168.1.0/24" placeholder="192.168.1.0/24"
+          style="max-width:260px;margin-bottom:14px">
+        <span class="lab">Kebutuhan host per subnet</span>
+        <div class="reqs" id="reqs"></div>
+        <div class="acts" style="margin-top:0">
+          <button class="btn" id="add" type="button">+ Tambah kebutuhan</button>
+          <button class="btn p" id="go" type="button">Alokasikan</button>
+        </div>
+        <p class="msg" id="vmsg" role="alert" hidden></p>
+        <div class="res" id="vres" hidden>
+          <p class="sum" id="sum"></p>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Kebutuhan</th>
+                  <th>Network</th>
+                  <th>Mask</th>
+                  <th>Range host</th>
+                  <th>Broadcast</th>
+                  <th>Host</th>
+                  <th>Terpakai</th>
+                </tr>
+              </thead>
+              <tbody id="tb"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    (function () {
+      var $ = function (i) { return document.getElementById(i) };
+      var E = function (m) { return new Error(m) };
+
+      /* ---------- inti perhitungan ---------- */
+      function parseIP(s) {
+        if (!s) throw E("Alamat IP masih kosong.");
+        if (/\s/.test(s)) throw E("Alamat IP tidak boleh mengandung spasi.");
+        var p = s.split(".");
+        if (p.length !== 4) throw E("Alamat IP harus terdiri dari 4 oktet, contoh 192.168.1.10.");
+        var n = 0;
+        for (var i = 0; i < 4; i++) {
+          if (!/^\d{1,3}$/.test(p[i])) throw E("Oktet ke-" + (i + 1) + " harus berupa angka 0–255.");
+          if (p[i].length > 1 && p[i][0] === "0") throw E("Oktet ke-" + (i + 1) + " tidak boleh diawali angka nol.");
+          if (+p[i] > 255) throw E("Oktet ke-" + (i + 1) + " bernilai " + p[i] + ", maksimal 255.");
+          n = n * 256 + (+p[i]);
+        }
+        return n;
+      }
+      function parsePf(s) {
+        if (s === "") throw E("Prefix masih kosong.");
+        if (!/^\d{1,2}$/.test(s) || +s > 32) throw E("Prefix harus bilangan bulat 0–32.");
+        return +s;
+      }
+      function str(n) { return [Math.floor(n / 16777216), (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join(".") }
+      function maskOf(p) { return p === 0 ? 0 : (0xFFFFFFFF << (32 - p)) >>> 0 }
+      function calc(ip, p) {
+        var m = maskOf(p), net = (ip & m) >>> 0, bc = (net | (~m >>> 0)) >>> 0, r = { p: p, ip: ip, mask: m, net: net, bc: bc, total: Math.pow(2, 32 - p) };
+        if (p === 32) { r.first = r.last = ip; r.hosts = 1; r.note = "host tunggal" }
+        else if (p === 31) { r.first = net; r.last = bc; r.hosts = 2; r.note = "point-to-point (RFC 3021)" }
+        else { r.first = net + 1; r.last = bc - 1; r.hosts = r.total - 2 }
+        r.nobc = p >= 31;
+        return r;
+      }
+      function kind(ip) {
+        var a = Math.floor(ip / 16777216), b = (ip >>> 16) & 255, k;
+        if (a === 0) k = "This network";
+        else if (a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)) k = "Privat (RFC 1918)";
+        else if (a === 127) k = "Loopback";
+        else if (a === 169 && b === 254) k = "APIPA (link-local)";
+        else if (a >= 224 && a <= 239) k = "Multicast";
+        else if (a >= 240) k = "Reserved";
+        else k = "Publik";
+        var c = a < 128 ? "A" : a < 192 ? "B" : a < 224 ? "C" : a < 240 ? "D" : "E";
+        return { type: k, cls: c };
+      }
+      function fmt(n) { return n.toLocaleString("id-ID") }
+
+      /* ---------- util UI ---------- */
+      var tt;
+      function toast(t) { var e = $("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(tt); tt = setTimeout(function () { e.classList.remove("on") }, 1400) }
+      function copy(t) {
+        function ok() { toast("Disalin: " + (t.length > 40 ? t.slice(0, 40) + "…" : t)) }
+        function fb() { var a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand("copy"); ok() } catch (e) { toast("Gagal menyalin") } document.body.removeChild(a) }
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, fb); else fb();
+      }
+      $("theme").onclick = function () {
+        var r = document.documentElement, d = r.getAttribute("data-theme");
+        var dark = d ? d === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+        r.setAttribute("data-theme", dark ? "light" : "dark");
+      };
+      var tabs = [["t1", "p1"], ["t2", "p2"]];
+      tabs.forEach(function (t) {
+        $(t[0]).onclick = function () {
+          tabs.forEach(function (x) {
+            var on = x[0] === t[0]; $(x[0]).setAttribute("aria-selected", on); $(x[1]).hidden = !on
+          })
+        }
+      });
+
+      /* ---------- tab Subnet ---------- */
+      var ipEl = $("ip"), pfEl = $("pf"), rg = $("rg"), cur = null;
+      ["172.16.5.130/25", "10.0.0.0/30", "192.168.1.0/31", "192.168.1.5/32", "192.168.10.77/26"].forEach(function (s) {
+        var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = s;
+        b.onclick = function () { var q = s.split("/"); ipEl.value = q[0]; pfEl.value = q[1]; rg.value = q[1]; run() };
+        $("chips").appendChild(b);
+      });
+      function bad(el, t) {
+        $("res").hidden = true; cur = null; ipEl.removeAttribute("aria-invalid"); pfEl.removeAttribute("aria-invalid");
+        if (t === null) { $("msg").hidden = true; return }
+        $("msg").textContent = t; $("msg").hidden = false; if (el) el.setAttribute("aria-invalid", "true");
+      }
+      function tile(k, v, cls, sm, cp) {
+        return '<div class="tile ' + (cls || "") + '"><div class="k">' + k + '</div><div class="v">' + v + (sm ? '<small>' + sm + '</small>' : '') + '</div>' +
+          (cp ? '<button class="cp" type="button" data-c="' + cp + '" aria-label="Salin ' + k + '">⧉</button>' : '') + '</div>';
+      }
+      function run() {
+        if (ipEl.value === "" && pfEl.value === "") { bad(null, null); return }
+        var ip, p;
+        try { ip = parseIP(ipEl.value) } catch (e) { bad(ipEl, e.message); return }
+        try { p = parsePf(pfEl.value) } catch (e) { bad(pfEl, e.message); return }
+        rg.value = p; ipEl.removeAttribute("aria-invalid"); pfEl.removeAttribute("aria-invalid"); $("msg").hidden = true;
+        var r = cur = calc(ip, p), kd = kind(ip);
+        $("hcidr").innerHTML = str(r.net) + "/" + p + "<small>" + str(r.mask) + "</small>";
+        var h = "";
+        for (var o = 0; o < 4; o++) {
+          h += '<div class="oct"><div class="dec">' + ((ip >>> (24 - o * 8)) & 255) + '</div><div class="cells">';
+          for (var k = 0; k < 8; k++) {
+            var pos = o * 8 + k;
+            h += '<button type="button" class="b ' + (pos < p ? "n" : "h") + (pos === p && p > 0 && p < 32 ? " e" : "") + '" data-p="' + (pos + 1) + '" aria-label="Set prefix ke ' + (pos + 1) + '">' + ((ip >>> (31 - pos)) & 1) + '</button>';
+          }
+          h += '</div></div>';
+        }
+        $("bits").innerHTML = h; $("nb").textContent = p; $("hb").textContent = 32 - p;
+        var wc = (~r.mask) >>> 0;
+        $("tiles").innerHTML =
+          tile("Subnet mask", str(r.mask), "", "/" + p, str(r.mask)) +
+          tile("Wildcard mask", str(wc), "", null, str(wc)) +
+          tile("Network address", str(r.net), "k1", null, str(r.net)) +
+          tile("Broadcast address", r.nobc ? "— tidak ada" : str(r.bc), "k2", null, r.nobc ? "" : str(r.bc)) +
+          tile("Host pertama", str(r.first), "", null, str(r.first)) +
+          tile("Host terakhir", str(r.last), "", null, str(r.last)) +
+          tile("Jumlah host", fmt(r.hosts), "", r.note || ("2^" + (32 - p) + " − 2"), String(r.hosts)) +
+          tile("Total alamat", fmt(r.total), "", "2^" + (32 - p)) +
+          tile("Kelas &amp; jenis", "Kelas " + kd.cls, "", kd.type);
+        $("res").hidden = false;
+        $("prev").disabled = r.net < r.total;
+        $("next").disabled = r.net + r.total > 4294967295;
+      }
+      $("bits").onclick = function (e) { var b = e.target.closest(".b"); if (b) { pfEl.value = b.getAttribute("data-p"); run() } };
+      $("tiles").onclick = function (e) { var b = e.target.closest(".cp"); if (b) copy(b.getAttribute("data-c")) };
+      rg.oninput = function () { pfEl.value = rg.value; run() };
+      ipEl.oninput = pfEl.oninput = run;
+      [ipEl, pfEl].forEach(function (el) { el.onkeydown = function (e) { if (e.key === "Enter") run() } });
+      function shift(d) { if (!cur) return; var n = cur.net + d * cur.total; if (n < 0 || n > 4294967295) return; ipEl.value = str(n); run() }
+      $("prev").onclick = function () { shift(-1) };
+      $("next").onclick = function () { shift(1) };
+      $("all").onclick = function () {
+        if (!cur) return; var r = cur;
+        copy("Network: " + str(r.net) + "/" + r.p + "\nMask: " + str(r.mask) + "\nBroadcast: " + (r.nobc ? "-" : str(r.bc)) +
+          "\nHost: " + str(r.first) + " - " + str(r.last) + "\nJumlah host: " + r.hosts);
+      };
+
+      /* ---------- tab VLSM ---------- */
+      var reqs = [100, 50, 20, 2];
+      function drawReqs() {
+        $("reqs").innerHTML = reqs.map(function (v, i) {
+          return '<div class="req"><span>' + (i + 1) + '</span><input type="number" min="1" inputmode="numeric" data-i="' + i + '" value="' + v + '" aria-label="Kebutuhan host ke-' + (i + 1) + '"><button class="x" type="button" data-x="' + i + '" aria-label="Hapus kebutuhan ke-' + (i + 1) + '">✕</button></div>';
+        }).join("");
+      }
+      $("reqs").oninput = function (e) { var i = e.target.getAttribute("data-i"); if (i !== null) reqs[i] = e.target.value };
+      $("reqs").onclick = function (e) { var b = e.target.closest(".x"); if (b) { reqs.splice(+b.getAttribute("data-x"), 1); drawReqs() } };
+      $("add").onclick = function () { reqs.push(""); drawReqs(); var f = $("reqs").querySelectorAll("input"); f[f.length - 1].focus() };
+      function vbad(t) { $("vres").hidden = true; $("vmsg").textContent = t; $("vmsg").hidden = false }
+      function vlsm() {
+        try {
+          var s = $("vn").value, q = s.split("/");
+          if (q.length !== 2) throw E("Tulis jaringan dalam format CIDR, contoh 192.168.1.0/24.");
+          var ip = parseIP(q[0]), p = parsePf(q[1]);
+          if (p > 30) throw E("Prefix jaringan induk maksimal /30.");
+          if ((ip & maskOf(p)) >>> 0 !== ip) throw E(q[0] + "/" + p + " bukan alamat jaringan yang valid. Alamat network seharusnya " + str((ip & maskOf(p)) >>> 0) + "/" + p + ".");
+          if (!reqs.length) throw E("Tambahkan minimal satu kebutuhan host.");
+          var need = reqs.map(function (v, i) {
+            if (!/^\d+$/.test(String(v)) || +v < 1) throw E("Kebutuhan ke-" + (i + 1) + " harus bilangan bulat minimal 1.");
+            return +v
+          });
+          var tot = Math.pow(2, 32 - p), off = 0, used = 0, rows = [];
+          need.slice().sort(function (a, b) { return b - a }).forEach(function (n) {
+            var size = 4; while (size < n + 2) size *= 2;
+            if (off + size > tot) throw E("Blok tidak cukup: kebutuhan " + n + " host (blok " + size + " alamat) tidak muat di " + s + ".");
+            var bp = 32 - Math.log2(size), r = calc(ip + off, bp); r.need = n; rows.push(r); off += size; used += size;
+          });
+          $("vmsg").hidden = true;
+          $("tb").innerHTML = rows.map(function (r, i) {
+            var pct = Math.round(r.need / r.hosts * 100);
+            return "<tr><td>" + (i + 1) + "</td><td>" + r.need + "</td><td><b>" + str(r.net) + "/" + r.p + "</b></td><td>" + str(r.mask) + "</td><td>" +
+              str(r.first) + " – " + str(r.last) + "</td><td>" + str(r.bc) + "</td><td>" + r.hosts + "</td><td><span class='bar' style='width:" + (pct * 0.5) + "px'></span>" + pct + "%</td></tr>";
+          }).join("");
+          $("sum").textContent = "Terpakai " + fmt(used) + " dari " + fmt(tot) + " alamat (" + Math.round(used / tot * 100) + "%). Sisa " + fmt(tot - used) + " alamat.";
+          $("vres").hidden = false;
+        } catch (e) { vbad(e.message) }
+      }
+      $("go").onclick = vlsm;
+      drawReqs(); run();
+    })();
+  </script>
 </body>
+
 </html>
