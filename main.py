@@ -1,8 +1,4 @@
-"""Kalkulator Subnet & VLSM: logika perhitungan + API FastAPI.
 
-Semua perhitungan memakai operasi bitwise (tanpa modul ipaddress)
-supaya alurnya sama dengan teori subnetting di kelas.
-"""
 from pathlib import Path
 
 from fastapi import FastAPI, Request

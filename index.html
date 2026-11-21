@@ -1,11 +1,28 @@
 <!DOCTYPE html>
 <html lang="id">
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Kalkulator Subnet &amp; VLSM</title>
-  <p class="school-name">SMK BRANTAS KARANGKATES</p>
+<!-- HEADER UTAMA -->
+<header class="main-header">
+  <div class="header-content">
+    <div class="header-text">
+      <h1>Kalkulator Subnet &amp; VLSM</h1>
+
+      <p class="school-name">SMK BRANTAS</p>
+
+      <p class="header-description">
+        Lihat bit network dan bit host berubah saat prefix
+        digeser, lalu bagi jaringan sesuai kebutuhan host.
+      </p>
+    </div>
+
+    <button class="theme" id="theme" type="button"
+      aria-label="Ganti tema terang atau gelap">◐</button>
+  </div>
+</header>
+
+  <button class="theme" id="theme" type="button"
+    aria-label="Ganti tema terang atau gelap">◐</button>
+</div>
   <style>
     :root {
       color-scheme: light;
@@ -29,17 +46,85 @@
       padding-top: env(safe-area-inset-top, 0px);
       padding-bottom: env(safe-area-inset-bottom, 0px);
 
-      .school-name {
-        font-size: 15px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        color: #83aaff;
-        margin-top: 5px;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-      }
+  /* HEADER UTAMA */
+.main-header {
+  width: 100%;
+  padding: 48px 18px 36px;
+  background-color: #0b142c;
+  background-image: radial-gradient(
+    circle,
+    rgba(91, 132, 200, 0.25) 1px,
+    transparent 1.5px
+  );
+  background-size: 32px 32px;
+  margin-bottom: 10px;
+}
 
-    }
+.header-content {
+  max-width: 1200px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.header-text h1 {
+  color: #f5f7ff;
+  font-size: clamp(2rem, 4.5vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.school-name {
+  color: #80a5ff;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  margin: 12px 0 0;
+}
+
+.header-description {
+  color: #a9c0ed;
+  font-size: 19px;
+  line-height: 1.6;
+  max-width: 650px;
+  margin: 24px 0 0;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .main-header {
+    padding: 35px 18px;
+  }
+
+  .header-content {
+    gap: 10px;
+  }
+
+  .header-text h1 {
+    font-size: 29px;
+  }
+
+  .school-name {
+    font-size: 14px;
+    letter-spacing: 4px;
+  }
+
+  .header-description {
+    font-size: 15px;
+    margin-top: 18px;
+  }
+}
+
+.sub {
+  margin: 0 auto;
+  color: var(--mut);
+  max-width: 46ch;
+  text-align: center;
+}
+}
 
     @media (prefers-color-scheme:dark) {
       :root:not([data-theme="light"]) {
@@ -107,12 +192,15 @@
     }
 
     .top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 20px
-    }
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+  text-align: center;
+  position: relative;
+}
 
     h1 {
       font-size: clamp(1.6rem, 4.5vw, 2.3rem);
@@ -541,15 +629,8 @@
 </head>
 
 <body>
-  <main>
-    <div class="top">
-      <div>
-        <h1>Kalkulator Subnet &amp; VLSM</h1>
-        <p class="sub">Lihat bit network dan bit host berubah saat prefix digeser, lalu bagi jaringan sesuai kebutuhan
-          host.</p>
-      </div>
-      <button class="theme" id="theme" type="button" aria-label="Ganti tema terang atau gelap">◐</button>
-    </div>
+ <main>
+  <div class="tabs" role="tablist">
 
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="t1" aria-selected="true" aria-controls="p1">Subnet</button>
